@@ -1,0 +1,119 @@
+/* LinkedIn Career Questions Overlay Styles */
+#linkedin-career-overlay {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 320px;
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  border: 1px solid #e0e0e0;
+  z-index: 10000;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.3s ease-in-out;
+  pointer-events: none;
+}
+
+#linkedin-career-overlay.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+#linkedin-career-overlay .question-content {
+  padding: 16px;
+}
+
+#linkedin-career-overlay .question-text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+#linkedin-career-overlay .button-group {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+#linkedin-career-overlay .btn-relevant,
+#linkedin-career-overlay .btn-skip {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  outline: none;
+}
+
+#linkedin-career-overlay .btn-relevant {
+  background-color: #0073b1;
+  color: white;
+}
+
+#linkedin-career-overlay .btn-relevant:hover {
+  background-color: #005885;
+}
+
+#linkedin-career-overlay .btn-skip {
+  background-color: #f3f2ef;
+  color: #666;
+  border: 1px solid #ddd;
+}
+
+#linkedin-career-overlay .btn-skip:hover {
+  background-color: #e9e5df;
+  color: #333;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  #linkedin-career-overlay {
+    right: 10px;
+    bottom: 10px;
+    width: calc(100vw - 20px);
+    max-width: 320px;
+  }
+}
+
+/* Ensure overlay doesn't interfere with LinkedIn's elements */
+#linkedin-career-overlay * {
+  box-sizing: border-box;
+}
+
+/* Animation for better UX */
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideOutDown {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+}
+
+#linkedin-career-overlay.visible {
+  animation: slideInUp 0.3s ease-out forwards;
+}
+
+#linkedin-career-overlay:not(.visible) {
+  animation: slideOutDown 0.3s ease-out forwards;
+}
