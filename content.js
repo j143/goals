@@ -11,6 +11,8 @@ class LinkedInCareerQuestions {
   }
   
   async init() {
+    console.log('LinkedIn Career Questions: Initializing extension...');
+    
     // Load user goal from storage
     await this.loadUserGoal();
     
@@ -19,6 +21,8 @@ class LinkedInCareerQuestions {
       console.log('LinkedIn Career Questions: No goal set. Open extension popup to set your career goal.');
       return;
     }
+    
+    console.log('LinkedIn Career Questions: Goal loaded:', this.userGoal);
     
     // Create overlay element
     this.createOverlay();
@@ -37,6 +41,8 @@ class LinkedInCareerQuestions {
         console.log('LinkedIn Career Questions: Goal cleared');
       }
     });
+    
+    console.log('LinkedIn Career Questions: Extension initialized successfully');
   }
   
   async loadUserGoal() {
@@ -76,8 +82,10 @@ class LinkedInCareerQuestions {
   }
   
   startContentObserver() {
-    // Initial scan
-    this.scanVisibleContent();
+    // Initial scan of existing content
+    setTimeout(() => {
+      this.scanVisibleContent();
+    }, 1000);
     
     // Create intersection observer for new posts
     const observer = new IntersectionObserver((entries) => {
@@ -91,34 +99,82 @@ class LinkedInCareerQuestions {
       rootMargin: '0px 0px -10% 0px'
     });
     
-    // Observe LinkedIn feed posts
-    const feedContainer = document.querySelector('.scaffold-layout__detail, .feed-container, .core-rail');
-    if (feedContainer) {
-      const observerCallback = () => {
-        const posts = feedContainer.querySelectorAll('div[data-id^="urn:li:activity"], .feed-shared-update-v2, .occludable-update');
-        posts.forEach(post => {
-          if (!post.hasAttribute('data-career-observed')) {
-            post.setAttribute('data-career-observed', 'true');
-            observer.observe(post);
-          }
+    // Function to observe LinkedIn feed posts
+    const observeFeedPosts = () => {
+      const feedSelectors = [
+        '.scaffold-layout__detail',
+        '.feed-container', 
+        '.core-rail',
+        '.scaffold-layout-container',
+        'main'
+      ];
+      
+      let feedContainer = null;
+      for (const selector of feedSelectors) {
+        feedContainer = document.querySelector(selector);
+        if (feedContainer) break;
+      }
+      
+      if (feedContainer) {
+        const observerCallback = () => {
+          const postSelectors = [
+            'div[data-id^="urn:li:activity"]',
+            '.feed-shared-update-v2',
+            '.occludable-update',
+            '[data-id*="activity"]'
+          ];
+          
+          postSelectors.forEach(selector => {
+            const posts = feedContainer.querySelectorAll(selector);
+            posts.forEach(post => {
+              if (!post.hasAttribute('data-career-observed')) {
+                post.setAttribute('data-career-observed', 'true');
+                observer.observe(post);
+              }
+            });
+          });
+        };
+        
+        // Initial observation
+        observerCallback();
+        
+        // Watch for new posts being added
+        const mutationObserver = new MutationObserver(() => {
+          setTimeout(observerCallback, 500); // Debounce
         });
-      };
-      
-      // Initial observation
-      observerCallback();
-      
-      // Watch for new posts
-      const mutationObserver = new MutationObserver(observerCallback);
-      mutationObserver.observe(feedContainer, {
-        childList: true,
-        subtree: true
-      });
-    }
+        
+        mutationObserver.observe(feedContainer, {
+          childList: true,
+          subtree: true
+        });
+      } else {
+        // Retry if feed container not found yet
+        setTimeout(observeFeedPosts, 2000);
+      }
+    };
+    
+    // Start observing
+    observeFeedPosts();
   }
   
   scanVisibleContent() {
-    const posts = document.querySelectorAll('div[data-id^="urn:li:activity"], .feed-shared-update-v2, .occludable-update');
-    posts.forEach(post => this.analyzePost(post));
+    const postSelectors = [
+      'div[data-id^="urn:li:activity"]',
+      '.feed-shared-update-v2',
+      '.occludable-update',
+      '[data-id*="activity"]'
+    ];
+    
+    postSelectors.forEach(selector => {
+      const posts = document.querySelectorAll(selector);
+      posts.forEach(post => {
+        // Only analyze posts that are visible
+        const rect = post.getBoundingClientRect();
+        if (rect.top < window.innerHeight && rect.bottom > 0) {
+          this.analyzePost(post);
+        }
+      });
+    });
   }
   
   analyzePost(postElement) {
@@ -132,10 +188,13 @@ class LinkedInCareerQuestions {
     const postText = this.extractPostText(postElement);
     if (!postText) return;
     
+    console.log('LinkedIn Career Questions: Analyzing post:', postText.substring(0, 100) + '...');
+    
     const contentType = this.detectContentType(postText, postElement);
     const question = this.generateQuestion(contentType, postText);
     
     if (question) {
+      console.log('LinkedIn Career Questions: Showing question for', contentType, 'type:', question);
       this.showOverlay(question);
     }
   }
